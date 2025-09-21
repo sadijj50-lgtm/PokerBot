@@ -1,4 +1,4 @@
-name: Build APK
+name: Build PokerBot APK
 
 on:
   push:
@@ -8,19 +8,29 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
-
-      - name: Install dependencies
+      - name: Install system dependencies
         run: |
-          python -m pip install --upgrade pip
+          sudo apt update
+          sudo apt install -y openjdk-17-jdk unzip wget git python3-pip python3-dev build-essential zlib1g-dev
+
+      - name: Install Python dependencies
+        run: |
+          python3 -m pip install --upgrade pip
           pip install buildozer cython kivy pillow pytesseract treys
+
+      - name: Install Android SDK & Build Tools
+        run: |
+          mkdir -p $ANDROID_SDK_ROOT/cmdline-tools
+          wget https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
+          unzip cmdline-tools.zip -d $ANDROID_SDK_ROOT/cmdline-tools
+          rm cmdline-tools.zip
+          yes | $ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools/bin/sdkmanager --sdk_root=$ANDROID_SDK_ROOT "platform-tools" "platforms;android-33" "build-tools;33.0.2"
 
       - name: Build APK
         run: |
